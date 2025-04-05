@@ -1,0 +1,35 @@
+---
+  - name: take backup for mysql database from managed node
+    hosts: all
+    become: yes
+    vars:
+      path_bkp: /tmp/bkp
+      username: root
+      ansible_python_interpreter: /usr/bin/python3
+    tasks:
+      - name: install mysql
+        yum:
+          name: mysql-server
+          state: present
+  
+      - name: start mysql service
+        systemd:
+          name: mysqld
+          state: started
+          enabled: yes
+  
+      - name: Create MySQL database
+        mysql_db:
+          name:  db_name
+          state: present
+          login_user: "{{ username }}"
+          login_host: localhost
+      
+      - name: create bkp dircectory
+          file:
+            path: "{{ path_bkp }}"
+            state: directory
+
+      - name: real backup
+          shell: sudo mysqldump -u "{{ username }}" --all-databases > {{ path_bkp }}/all.sql
+          become_user: root
